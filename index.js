@@ -14,6 +14,8 @@ const createUser = (name, birthday) => {
   database.users[nextUserId] = { id: nextUserId, name, birthday };
 };
 
+const stringifyBirthday = (birthday) => birthday.toLocaleString();
+
 const css = `
   * {
     font-family: Arial;
@@ -64,7 +66,19 @@ app.get("/", (req, res) => {
     ? database.users[req.params.userId]
     : null;
 
-  console.log(database.users);
+  // extract some variables to be injected into the page
+  const showConfirmUserCreated = !!req.query.createdOK;
+  const showMissingRequiredFields = !!req.query.missingRequiredField;
+  // id of -1 will indicate that the id is unassigned. We will choose to
+  // interpret this as effectively the same as null, and the post request
+  // handler will use this as a hook to know that a new user id needs to be
+  // generated.
+  const userId = currentUser ? currentUser.id : -1;
+  const userName = currentUser ? currentUser.name : "";
+  const userBirthday = currentUser ? stringifyBirthday(currentUser.birthday) : "";
+  const showUsersTable = database.users.length !== 0;
+  const usersList = database.users;
+
 
   res.send(`
     <style>${css}</style>
@@ -75,21 +89,21 @@ app.get("/", (req, res) => {
       <form action="" method="post">
         <h2>Add User</h2>
 
-        ${req.query.createdOK ? (`
+        ${showConfirmUserCreated ? (`
           <div style="margin: 1rem 0;">
             <span class="ok">user ${nextUserId} was created</span>
             <a href="/">dismiss</a>
           </div>
         `) : ''}
 
-        ${req.query.missingRequiredField ? (`
+        ${showMissingRequiredFields ? (`
           <div style="margin: 1rem 0;">
             <span class="warn">required fields were missing</span>
             <a href="/">dismiss</a>
           </div>
           `) : ''}
 
-        <input type="hidden" name="id" value="${currentUser?.id || -1}" />
+        <input type="hidden" name="id" value="${userId}" />
 
         <label for="name">Name</label>
         <input
@@ -97,7 +111,7 @@ app.get("/", (req, res) => {
           name="name"
           type="text"
           placeholder="name"
-          value="${currentUser ? currentUser.name : ""}"
+          value="${userName}"
         />
 
         <label for="birthday">Birthday</label>
@@ -105,14 +119,14 @@ app.get("/", (req, res) => {
           id="birthday"
           name="birthday"
           type="date"
-          value="${currentUser ? currentUser.birthday : ""}"
+          value="${userBirthday}"
         />
 
         <button>save</button>
       </form>
 
       ${
-        database.users.length !== 0
+        showUsersTable
           ? `
         <table>
           <thead>
@@ -124,13 +138,12 @@ app.get("/", (req, res) => {
             </tr>
             </thead>
             <tbody>
-              ${database.users.map(
+              ${usersList.map(
                 ({ id, name, birthday }) => `
                 <tr>
                   <td>${id}</td>
                   <td>${name}</td>
-                  <td>${birthday.toLocaleDateString()}</td>
-                  <td>
+                  <td>${stringifyBirthday(birthday)}</td> <td>
                     <a href="/edit/${id}"><button>Edit</button></a>
                     <a href="/delete/${id}"><button>Delete</button></a>
                   </td>
