@@ -14,7 +14,14 @@ const createUser = (name, birthday) => {
   database.users[nextUserId] = { id: nextUserId, name, birthday };
 };
 
-const stringifyBirthday = (birthday) => birthday.toLocaleString();
+const stringifyBirthday = (birthday) => {
+  // we will add 10 hours to the date, making GMT-midnight dates work when they
+  // are converted to US locales. This is obviously NOT the best way for
+  // international support, but it'll do for a demo being used by folks in the
+  // US
+  const offset = birthday.getTimezoneOffset() * 60000;
+  return new Date(birthday.getTime() + offset).toLocaleDateString();
+}
 
 const css = `
   * {
