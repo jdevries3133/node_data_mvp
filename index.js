@@ -15,10 +15,7 @@ const createUser = (name, birthday) => {
 };
 
 const stringifyBirthday = (birthday) => {
-  // we will add 10 hours to the date, making GMT-midnight dates work when they
-  // are converted to US locales. This is obviously NOT the best way for
-  // international support, but it'll do for a demo being used by folks in the
-  // US
+  // see https://stackoverflow.com/a/39209842
   const offset = birthday.getTimezoneOffset() * 60000;
   return new Date(birthday.getTime() + offset).toLocaleDateString();
 }
